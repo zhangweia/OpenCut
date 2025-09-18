@@ -55,11 +55,11 @@ services:
         - FREESOUND_API_KEY=${FREESOUND_API_KEY}
     restart: unless-stopped
     ports:
-      - "3100:3000" # app is running on 3000 so we run this at 3100
+      - "5555:3000" # app is running on 3000 internally, exposed on 5555
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://opencut:opencutthegoat@db:5432/opencut
-      - BETTER_AUTH_URL=http://localhost:3000
+      - BETTER_AUTH_URL=http://localhost:5555
       - BETTER_AUTH_SECRET=your-production-secret-key-here
       - UPSTASH_REDIS_REST_URL=http://serverless-redis-http:80
       - UPSTASH_REDIS_REST_TOKEN=example_token

@@ -109,7 +109,7 @@ DATABASE_URL="postgresql://opencut:opencutthegoat@localhost:5432/opencut"
 
 # Authentication
 BETTER_AUTH_SECRET="your-generated-secret-here"
-BETTER_AUTH_URL="http://localhost:3000"
+BETTER_AUTH_URL="http://localhost:5555"
 
 # Redis
 UPSTASH_REDIS_REST_URL="http://localhost:8079"

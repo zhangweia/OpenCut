@@ -108,7 +108,7 @@ Before you begin, ensure you have the following installed on your system:
 
    # Generate a secure secret for Better Auth
    BETTER_AUTH_SECRET="your-generated-secret-here"
-   BETTER_AUTH_URL="http://localhost:3000"
+   BETTER_AUTH_URL="http://localhost:5555"
 
    # Redis (matches docker-compose.yaml)
    UPSTASH_REDIS_REST_URL="http://localhost:8079"
@@ -140,7 +140,7 @@ Before you begin, ensure you have the following installed on your system:
 5. Run database migrations: `bun run db:migrate` from (inside apps/web)
 6. Start the development server: `bun run dev` from (inside apps/web)
 
-The application will be available at [http://localhost:3000](http://localhost:3000).
+The application will be available at [http://localhost:5555](http://localhost:5555).
 
 ## Contributing
 

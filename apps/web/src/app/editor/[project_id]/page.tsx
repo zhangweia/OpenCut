@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { EditorHeader } from "@/components/editor/editor-header";
 import { MediaPanel } from "@/components/editor/media-panel";
+import { Onboarding } from "@/components/editor/onboarding";
+import { PreviewPanel } from "@/components/editor/preview-panel";
 import { PropertiesPanel } from "@/components/editor/properties-panel";
 import { Timeline } from "@/components/editor/timeline";
-import { PreviewPanel } from "@/components/editor/preview-panel";
-import { EditorHeader } from "@/components/editor/editor-header";
+import { EditorProvider } from "@/components/providers/editor-provider";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { usePlaybackControls } from "@/hooks/use-playback-controls";
 import { usePanelStore } from "@/stores/panel-store";
 import { useProjectStore } from "@/stores/project-store";
-import { EditorProvider } from "@/components/providers/editor-provider";
-import { usePlaybackControls } from "@/hooks/use-playback-controls";
-import { Onboarding } from "@/components/editor/onboarding";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef } from "react";
 
-export default function Editor() {
+function EditorContent() {
   const {
     toolsPanel,
     previewPanel,
@@ -43,11 +43,99 @@ export default function Editor() {
   } = useProjectStore();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params.project_id as string;
   const handledProjectIds = useRef<Set<string>>(new Set());
   const isInitializingRef = useRef<boolean>(false);
 
   usePlaybackControls();
+
+  // 处理从 nd-super-agent 传递过来的参数
+  useEffect(() => {
+    const handleExternalParams = async () => {
+      console.log('🔍 开始检查外部参数...');
+      
+      // 获取URL参数
+      const token = searchParams.get('token');
+      const userId = searchParams.get('user_id');
+      const tenantId = searchParams.get('tenant_id');
+      const materialIds = searchParams.get('material_ids');
+      
+      // 从环境变量获取 API 基础 URL
+      const apiBaseUrl = process.env.NEXT_PUBLIC_ND_SUPER_AGENT_API_URL;
+
+      console.log('📋 外部参数检查:', {
+        hasToken: !!token,
+        hasUserId: !!userId,
+        hasTenantId: !!tenantId,
+        hasMaterialIds: !!materialIds,
+        hasApiBaseUrl: !!apiBaseUrl,
+        materialIds
+      });
+
+
+      // 如果有外部参数，处理素材加载
+      if (token && materialIds && apiBaseUrl) {
+        console.log('检测到外部参数，开始加载素材:', {
+          token: token.substring(0, 10) + '...',
+          userId,
+          tenantId,
+          materialIds,
+          apiBaseUrl: apiBaseUrl?.substring(0, 30) + '...'
+        });
+
+        try {
+          // 解析素材ID列表
+          const ids = materialIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+          
+          if (ids.length > 0) {
+            console.log('🔗 调用素材接口:', { ids, apiUrl: `${apiBaseUrl}/gallery/batch-query` });
+
+            // 调用 nd-super-agent 的素材接口
+            const response = await fetch(`${apiBaseUrl}/gallery/batch-query`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...(tenantId && { 'X-Tenant-ID': tenantId }),
+                ...(userId && { 'X-User-ID': userId })
+              },
+              body: JSON.stringify({ ids })
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log('✅ 素材加载成功:', {
+                找到数量: result.data?.found_count || 0,
+                请求数量: result.data?.requested_count || 0
+              });
+              
+              if (result.success && result.data && result.data.items) {
+                console.log('📋 获取到素材:', result.data.items.map(item => ({
+                  id: item.id,
+                  name: item.name || item.title,
+                  type: item.type
+                })));
+                
+                // TODO: 将素材添加到 OpenCut 的媒体存储中
+                // 可能需要调用 useMediaStore 或相关的存储管理
+              }
+            } else {
+              console.error('❌ 素材加载失败:', response.status, response.statusText);
+            }
+          } else {
+            console.warn('⚠️ 没有有效的素材ID');
+          }
+        } catch (error) {
+          console.error('💥 素材加载失败:', error.message);
+        }
+      }
+    };
+
+    // 延迟执行，确保组件已经初始化
+    const timer = setTimeout(handleExternalParams, 1000);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -455,5 +543,22 @@ export default function Editor() {
         <Onboarding />
       </div>
     </EditorProvider>
+  );
+}
+
+export default function Editor() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm text-muted-foreground">正在加载编辑器...</p>
+          </div>
+        </div>
+      }
+    >
+      <EditorContent />
+    </Suspense>
   );
 }

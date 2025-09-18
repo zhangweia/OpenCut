@@ -1,8 +1,8 @@
+import { db } from "@opencut/db";
+import { Redis } from "@upstash/redis";
 import { betterAuth, RateLimit } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@opencut/db";
 import { keys } from "./keys";
-import { Redis } from "@upstash/redis";
 
 const {
   NEXT_PUBLIC_BETTER_AUTH_URL,
@@ -44,7 +44,7 @@ export const auth = betterAuth({
   },
   baseURL: NEXT_PUBLIC_BETTER_AUTH_URL,
   appName: "OpenCut",
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: ["http://localhost:5555"],
 });
 
 export type Auth = typeof auth;
