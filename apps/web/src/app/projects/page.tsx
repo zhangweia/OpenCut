@@ -1,46 +1,46 @@
 "use client";
 
-import {
-  Calendar,
-  ChevronLeft,
-  Loader2,
-  MoreHorizontal,
-  ArrowDown01,
-  Plus,
-  Search,
-  Trash2,
-  Video,
-  X,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { RenameProjectDialog } from "@/components/rename-project-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useProjectStore } from "@/stores/project-store";
 import { useTimelineStore } from "@/stores/timeline-store";
 import type { TProject } from "@/types/project";
+import {
+    ArrowDown01,
+    Calendar,
+    ChevronLeft,
+    Loader2,
+    MoreHorizontal,
+    Plus,
+    Search,
+    Trash2,
+    Video,
+    X,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const {
     savedProjects,
     isLoading,
@@ -63,6 +63,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("createdAt-desc");
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const getProjectThumbnail = useCallback(
     async (projectId: string): Promise<string | null> => {
@@ -92,7 +93,14 @@ export default function ProjectsPage() {
   const handleCreateProject = async () => {
     const projectId = await createNewProject("New Project");
     console.log("projectId", projectId);
-    router.push(`/editor/${projectId}`);
+    
+    // 保留查询参数
+    const queryString = searchParams.toString();
+    const redirectUrl = queryString 
+      ? `/editor/${projectId}?${queryString}`
+      : `/editor/${projectId}`;
+    
+    router.push(redirectUrl);
   };
 
   const handleSelectProject = (projectId: string, checked: boolean) => {
@@ -642,5 +650,54 @@ function NoResults({
         Clear Search
       </Button>
     </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <div className="pt-6 px-6 flex items-center justify-between w-full h-16">
+            <Link
+              href="/"
+              className="flex items-center gap-1 hover:text-muted-foreground transition-colors"
+            >
+              <ChevronLeft className="size-5! shrink-0" />
+              <span className="text-sm font-medium">Back</span>
+            </Link>
+          </div>
+          <main className="max-w-6xl mx-auto px-6 pt-6 pb-6">
+            <div className="mb-8 flex items-center justify-between">
+              <div className="flex flex-col gap-3">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                  Your Projects
+                </h1>
+                <p className="text-muted-foreground">Loading...</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }, (_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="overflow-hidden bg-background border-none p-0"
+                >
+                  <Skeleton className="aspect-square w-full bg-muted/50" />
+                  <div className="px-0 pt-5 flex flex-col gap-1">
+                    <Skeleton className="h-4 w-3/4 bg-muted/50" />
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="h-4 w-4 bg-muted/50" />
+                      <Skeleton className="h-4 w-24 bg-muted/50" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        </div>
+      }
+    >
+      <ProjectsPageContent />
+    </Suspense>
   );
 }

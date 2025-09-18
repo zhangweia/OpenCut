@@ -1,21 +1,27 @@
-import { Hero } from "@/components/landing/hero";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import type { Metadata } from "next";
-import { SITE_URL } from "@/constants/site";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: SITE_URL,
-  },
-};
+interface HomeProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
-export default async function Home() {
-  return (
-    <div>
-      <Header />
-      <Hero />
-      <Footer />
-    </div>
-  );
+export default async function Home({ searchParams }: HomeProps) {
+  // 构建查询字符串
+  const queryString = new URLSearchParams();
+  
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          queryString.append(key, v);
+        }
+      } else {
+        queryString.set(key, value);
+      }
+    }
+  }
+  
+  const queryStr = queryString.toString();
+  const redirectUrl = queryStr ? `/editor?${queryStr}` : "/editor";
+  
+  redirect(redirectUrl);
 }

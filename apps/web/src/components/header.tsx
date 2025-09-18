@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
-import { HeaderBase } from "./header-base";
 import Image from "next/image";
+import Link from "next/link";
+import { HeaderBase } from "./header-base";
 import { ThemeToggle } from "./theme-toggle";
+import { Button } from "./ui/button";
 
 export function Header() {
   const leftContent = (
-    <Link href="/" className="flex items-center gap-3">
+    <Link href="/editor" className="flex items-center gap-3">
       <Image
         src="/logo.svg"
         alt="OpenCut Logo"
@@ -24,6 +24,11 @@ export function Header() {
   const rightContent = (
     <nav className="flex items-center gap-2">
       <div className="flex items-center gap-4">
+        <Link href="/landing">
+          <Button variant="text" className="text-sm p-0">
+            About
+          </Button>
+        </Link>
         <Link href="/blog">
           <Button variant="text" className="text-sm p-0">
             Blog
